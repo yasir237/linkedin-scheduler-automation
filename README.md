@@ -128,3 +128,21 @@ Bilgisayar açıldığında n8n'in otomatik başlaması için:
 3. Kısayola sağ tıkla → Kopyala
 4. `Win + R` → `shell:startup` → Enter
 5. Kısayolu bu klasöre yapıştır
+
+---
+
+## Ekran Görüntüleri
+
+<img width="1919" height="920" alt="Ekran görüntüsü 2026-04-19 185131" src="https://github.com/user-attachments/assets/0fe6f0f1-6ba1-46a1-9b25-6ed804847c66" />
+
+---
+
+<img width="1919" height="912" alt="Ekran görüntüsü 2026-04-19 185219" src="https://github.com/user-attachments/assets/810519cd-e7d0-4e30-9a58-99e8963285ea" />
+
+---
+
+<img width="400" height="231" alt="Ekran görüntüsü 2026-04-19 185253" src="https://github.com/user-attachments/assets/53244dc2-b5a8-49b6-8c5a-38bfabfbe897" />
+
+
+
+
