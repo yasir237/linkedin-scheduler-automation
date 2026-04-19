@@ -1,0 +1,238 @@
+{
+  "name": "LinkedIn Post Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "has-posts-check",
+              "leftValue": "={{ $json.hasPosts }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ffc03475-911e-4caf-8b19-81de225b2b66",
+      "name": "Bugün post var mı?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst schedulerUrl = 'file:///C:/Users/KULLANICI_ADINIZ/linkedin-scheduler/linkedin-scheduler.html';\n\nconst postLines = items.map((item, i) => {\n  const p = item.json;\n  const time = p.scheduledAt ? p.scheduledAt.split('T')[1]?.slice(0,5) : '--:--';\n  const preview = p.content ? p.content.slice(0, 120) + (p.content.length > 120 ? '...' : '') : '(içerik yok)';\n  const media = p.mediaCount > 0 ? ` [${p.mediaCount} medya]` : '';\n  const tags = p.tags ? ` #${p.tags.replace(/, /g, ' #')}` : '';\n  return `${i+1}. ${time}${media}${tags}\\n${preview}`;\n}).join('\\n\\n');\n\nconst count = items.length;\nconst date = items[0].json.todayStr;\nconst firstPreview = items[0].json.content ? items[0].json.content.slice(0, 100).replace(/'/g, '').replace(/\\n/g, ' ') : 'Icerik yok';\nconst firstMedia = items[0].json.firstMediaName || '';\nconst imgPath = firstMedia ? `C:\\\\Users\\\\KULLANICI_ADINIZ\\\\linkedin-scheduler\\\\${firstMedia}` : `C:\\\\Users\\\\KULLANICI_ADINIZ\\\\linkedin-scheduler\\\\logo.png`;\n\nreturn [{\n  json: {\n    subject: `📅 LinkedIn: Bugün ${count} post paylaşılacak (${date})`,\n    htmlBody: `\n<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <div style=\"background: #0a66c2; color: white; padding: 20px; border-radius: 8px 8px 0 0;\">\n    <h2 style=\"margin:0\">📅 LinkedIn Günlük Hatırlatma</h2>\n    <p style=\"margin:8px 0 0; opacity:0.85\">Bugün ${count} post paylaşılacak — ${date}</p>\n  </div>\n  <div style=\"background: #f5f5f5; padding: 20px; border-radius: 0 0 8px 8px;\">\n    ${items.map((item, i) => {\n      const p = item.json;\n      const time = p.scheduledAt ? p.scheduledAt.split('T')[1]?.slice(0,5) : '--:--';\n      const preview = p.content ? p.content.slice(0,200) + (p.content.length > 200 ? '...' : '') : '(içerik yok)';\n      const media = p.mediaCount > 0 ? `<span style=\"background:#e3f0ff;color:#0a66c2;padding:2px 8px;border-radius:12px;font-size:12px\">📎 ${p.mediaCount} medya</span>` : '';\n      const tags = p.tags ? p.tags.split(', ').map(t => `<span style=\"background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:12px;font-size:11px\">#${t}</span>`).join(' ') : '';\n      return `\n        <div style=\"background:white;border-radius:6px;padding:16px;margin-bottom:12px;border-left:4px solid #0a66c2\">\n          <div style=\"display:flex;align-items:center;gap:8px;margin-bottom:8px\">\n            <strong style=\"font-size:15px\">Post ${i+1}</strong>\n            <span style=\"background:#0a66c2;color:white;padding:2px 8px;border-radius:12px;font-size:12px\">⏰ ${time}</span>\n            ${media}\n          </div>\n          <p style=\"color:#333;margin:8px 0;line-height:1.5\">${preview.replace(/\\n/g,'<br>')}</p>\n          <div style=\"margin-top:8px\">${tags}</div>\n          ${p.notes ? `<div style=\"background:#fffbea;border:1px solid #ffd54f;border-radius:4px;padding:8px;margin-top:8px;font-size:12px;color:#666\">📝 Not: ${p.notes}</div>` : ''}\n        </div>`;\n    }).join('')}\n    <p style=\"color:#999;font-size:12px;text-align:center;margin-top:16px\">Bu bildirim LinkedIn Scheduler tarafından gönderildi.</p>\n  </div>\n</div>`,\n    textBody: `LinkedIn Günlük Hatırlatma - ${date}\\nBugün ${count} post var:\\n\\n${postLines}`,\n    count,\n    firstPostPreview: firstPreview,\n    firstMediaName: firstMedia,\n    psCommand: `powershell -Command \"Import-Module BurntToast; $img = if ((Test-Path '${imgPath}')) { '${imgPath}' } else { 'E:\\\\\\\\LinkedInScheduler\\\\\\\\logo.png' }; $btn = New-BTButton -Content 'Aç' -Arguments '${schedulerUrl}'; New-BurntToastNotification -Text 'LinkedIn Scheduler', '${firstPreview}' -AppLogo $img -Button $btn\"`\n  }\n}];"
+      },
+      "id": "9e958488-3ad7-4fa3-aea5-15f604808c75",
+      "name": "Bildirim İçeriği Hazırla",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "SENIN_EMAIL@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.htmlBody }}",
+        "options": {}
+      },
+      "id": "c48ab2bd-dbb0-4aa9-9138-15be9996439a",
+      "name": "E-posta Gönder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "webhookId": "5a3b03ec-f4e4-46ce-944d-4e7ba243801c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "824f7a1e-87b9-4807-a2c3-926f23908dbd",
+      "name": "Bugün post yok - dur",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        192,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "fileSelector": "C:/Users/KULLANICI_ADINIZ/linkedin-scheduler/posts.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        160
+      ],
+      "id": "5833d098-20b5-432a-a9b4-f464626634df",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binaryKey = Object.keys(item.binary)[0];\nconst rawContent = Buffer.from(item.binary[binaryKey].data, 'base64').toString('utf8');\nconst posts = JSON.parse(rawContent);\n\nconst today = new Date();\ntoday.setDate(today.getDate() + 1);\nconst todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;\n\nconst todaysPosts = posts.filter(p => {\n  if (!p.scheduledAt) return false;\n  if (p.status !== 'scheduled') return false;\n  const postDate = p.scheduledAt.split('T')[0];\n  return postDate === todayStr;\n});\n\nif (todaysPosts.length === 0) {\n  return [{ json: { hasPosts: false, count: 0, todayStr } }];\n}\n\nreturn todaysPosts.map(p => ({\n  json: {\n    hasPosts: true,\n    id: p.id,\n    content: p.content,\n    scheduledAt: p.scheduledAt,\n    tags: (p.tags || []).join(', '),\n    notes: p.notes || '',\n    mediaCount: (p.mediaRefs || []).length,\n    todayStr\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        160
+      ],
+      "id": "4c83cad1-aedc-482e-8e59-820674e7f047",
+      "name": "posts.json Oku ve Filtrele"
+    },
+    {
+      "parameters": {
+        "command": "={{ $json.psCommand }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        480,
+        192
+      ],
+      "id": "69af6ce9-5f94-4435-a063-66b7c3dc7a31",
+      "name": "Desktop Bildirimi Gönder",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 1 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * * "
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 13 * * *"
+            }
+          ]
+        }
+      },
+      "id": "6531f5d2-d447-4be1-be0b-ab6f07702650",
+      "name": "Her Sabah 08:00, 13:00, 20:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        160
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Bugün post var mı?": {
+      "main": [
+        [
+          {
+            "node": "Bildirim İçeriği Hazırla",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bugün post yok - dur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bildirim İçeriği Hazırla": {
+      "main": [
+        [
+          {
+            "node": "E-posta Gönder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Desktop Bildirimi Gönder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "posts.json Oku ve Filtrele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "posts.json Oku ve Filtrele": {
+      "main": [
+        [
+          {
+            "node": "Bugün post var mı?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Her Sabah 08:00, 13:00, 20:00": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  },
+  "id": "",
+  "tags": []
+}
